@@ -6,8 +6,8 @@ const APIFeatures = require("../utils/apiFeatures");
 exports.getAllProducts = catchAsync(async (req, res, next) => {
 
   let filter = {};
-  if(req.seller){
-    filter = {seller:req.seller.id}
+  if (req.seller) {
+    filter = { seller: req.seller.id }
   }
 
 
@@ -21,7 +21,6 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
     "seller",
     "firstname lastname email"
   );
-  console.log("all products", allProducts);
   res.status(200).json({
     status: "success",
     data: allProducts,
@@ -43,29 +42,26 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
 // });
 exports.getProductById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  
+
   let query = Product.findById(id).populate(
     "seller",
     "name surname email profilePicture"
   );
-  
+
   if (req.seller) {
     query = Product.findOne({ _id: id, seller: req.seller.id }).populate(
       "seller",
       "name surname email profilePicture"
     );
   }
-  
+
   const product = await query;
 
   if (!product) {
     return next(new AppError("No product found with that ID", 404));
   }
 
-  res.status(200).json({
-    status: "success",
-    data: product
-  });
+  res.status(200).json(product);
 });
 
 // exports.editProductById = catchAsync(async (req, res, next) => {
@@ -87,19 +83,19 @@ exports.getProductById = catchAsync(async (req, res, next) => {
 
 
 
-exports.editProductById= catchAsync(async (req, res, next) => {
+exports.editProductById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  
+
   const product = await Product.findById(id);
-  
+
   if (!product) {
     return next(new AppError("No product found with that ID", 404));
   }
-  
+
   if (product.seller.toString() !== req.seller.id) {
     return next(new AppError("You do not have permission to update this product", 403));
   }
-  
+
   const updatedProduct = await Product.findByIdAndUpdate(id, req.body, {
     new: true,
     runValidators: true
@@ -133,7 +129,7 @@ exports.editProductById= catchAsync(async (req, res, next) => {
 // });
 
 exports.createProduct = catchAsync(async (req, res, next) => {
- 
+
 
   if (!req.body.seller) {
     if (req.seller && req.seller.id) {
@@ -177,19 +173,19 @@ exports.createProduct = catchAsync(async (req, res, next) => {
 //   res.status(204).json({ status: "success", data: null });
 // });
 
-exports.deleteProductById= catchAsync(async (req, res, next) => {
+exports.deleteProductById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  
+
   const product = await Product.findById(id);
-  
+
   if (!product) {
     return next(new AppError("No product found with that ID", 404));
   }
-  
+
   if (product.seller.toString() !== req.seller.id) {
     return next(new AppError("You do not have permission to delete this product", 403));
   }
-  
+
   await Product.findByIdAndDelete(id);
 
   res.status(204).json({
