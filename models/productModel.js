@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema({
     description: { type: String, required: [true, "Product description is required!"] },
     image: {
         type: [String],
-        required: false,
+        required: true,
         set: function (val) {
             if (!Array.isArray(val)) {
                 throw new AppError('Images must be an array!', 400);
@@ -45,22 +45,26 @@ const productSchema = new mongoose.Schema({
     },
     isAvailable: {
         type: Boolean,
-        default: true
+        default: true,
+        required:false
     },
     isOrganic: {
         type: Boolean,
-        default: false
+        default: false,
+        required:false
     },
     rating: {
         type: Number,
         min: 0,
         max: 5,
-        default: 0
+        default: 0,
+        required:false
     },
     count: {
         type: Number,
         default: 0,
-        min: [0, 'Count cannot be negative']
+        min: [0, 'Count cannot be negative'],
+        required:false
     },
     productionLocation: {
         type: String,

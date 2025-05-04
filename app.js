@@ -21,7 +21,7 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://rackspace-zeta.vercel.app"],
+    origin: ["http://localhost:3000", "https://rackspace-zeta.vercel.app","https://localhost:3030","https://dev-lankmark-main-ui.vercel.app?_vercel_share=er7rsSJ0oegEEOzVPZ1zj7RF6KQpF3q5"],
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
