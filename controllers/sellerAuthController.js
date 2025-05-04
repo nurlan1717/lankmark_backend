@@ -112,19 +112,23 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.updatedPassword = catchAsync(async (req, res, next) => {
+
   const seller = await Seller.findById(req.seller.id).select("+password");
 
-  if(!(await seller.correctPassword(req.body.passwordCurrent,seller.password))){
-    return next(new AppError('Your current password is incorrect',401))
-  }
 
+  const isCorrect = await seller.correctPassword(req.body.passwordCurrent, seller.password);
+
+  if (!isCorrect) {
+    console.warn("Incorrect current password provided.");
+    return next(new AppError('Your current password is incorrect', 401));
+  }
+  if (!req.body.passwordCurrent || !req.body.password) {
+    return next(new AppError("Please provide current and new password", 400));
+  }
+  
 
   seller.password = req.body.password;
-  await seller.save()
+  await seller.save();
 
-
-  createSendToken(seller,200,res)
-
-
-
+  createSendToken(seller, 200, res);
 });
