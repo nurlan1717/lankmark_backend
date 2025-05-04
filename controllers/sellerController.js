@@ -1,7 +1,7 @@
 const Seller = require('../models/sellerModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const uploadToCloudinary  = require('../utils/cloudinaryUpload');
+const uploadToCloudinary = require('../utils/cloudinaryUpload');
 const { photoUpload } = require('../utils/multerConfig');
 
 
@@ -24,7 +24,7 @@ exports.createSeller = catchAsync(async (req, res, next) => {
   }
 
   let photoUrl = 'https://thumbs.dreamstime.com/b/default-profile-picture-icon-high-resolution-high-resolution-default-profile-picture-icon-symbolizing-no-display-picture-360167031.jpg';
-  
+
   if (req.file) {
     photoUrl = await uploadToCloudinary(req.file);
   }
@@ -39,14 +39,12 @@ exports.createSeller = catchAsync(async (req, res, next) => {
     location,
     photo: photoUrl,
     password,
-    createdBy: req.user.id 
+    createdBy: req.user.id
   };
 
   const newSeller = await Seller.create(sellerData);
 
   newSeller.password = undefined;
-
-  console.log('New seller created by user:', newSeller);
 
   res.status(201).json({
     status: 'success',
@@ -58,7 +56,7 @@ exports.createSeller = catchAsync(async (req, res, next) => {
 
 exports.getAllSellers = catchAsync(async (req, res, next) => {
   const sellers = await Seller.find();
-  
+
   res.status(200).json({
     status: 'success',
     results: sellers.length,
@@ -68,16 +66,14 @@ exports.getAllSellers = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
-
 exports.getProfile = catchAsync(async (req, res, next) => {
+  if (!req.seller || !req.seller.id) {
+    return next(new AppError('Seller ID is missing in the request.', 400));
+  }
   const seller = await Seller.findById(req.seller.id);
-  
   if (!seller) {
     return next(new AppError('No seller found with that ID', 404));
   }
-  
   res.status(200).json({
     status: 'success',
     data: {
@@ -87,55 +83,61 @@ exports.getProfile = catchAsync(async (req, res, next) => {
 });
 
 exports.updateProfile = catchAsync(async (req, res, next) => {
-
-  if (req.body.password) {
-    return next(
-      new AppError(
-        "This route is not for password updates. Please use /update-password.",
-        400
-      )
-    );
-  }
-
-  const filteredBody = filterObj(
-    req.body,
-    "name",
-    "surname",
-    "sellerCategory",
-    "certificate",
-    "age",
-    "location"
-  );
-
-  if (req.file) {
-    try {
-      const uploadedPhotoUrl = await uploadToCloudinary(req.file);
-      filteredBody.photo = uploadedPhotoUrl;
-    } catch (err) {
-      console.error(" Failed to upload image:", err);
-      return next(new AppError("Failed to upload image", 500));
+  try {
+    if (req.body.password) {
+      return next(
+        new AppError(
+          "This route is not for password updates. Please use /update-password.",
+          400
+        )
+      );
     }
+
+    const filteredBody = filterObj(
+      req.body,
+      "name",
+      "surname",
+      "sellerCategory",
+      "certificate",
+      "age",
+      "location"
+    );
+
+    if (req.file) {
+      try {
+        const uploadedPhotoUrl = await uploadToCloudinary(req.file);
+        filteredBody.photo = uploadedPhotoUrl;
+      } catch (err) {
+        console.error("Failed to upload image:", err);
+        return next(new AppError("Failed to upload image", 500));
+      }
+    }
+
+    const updatedSeller = await Seller.findByIdAndUpdate(
+      req.seller.id,
+      filteredBody,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedSeller) {
+      console.warn("No seller found with ID:", req.seller.id);
+      return next(new AppError("No seller found with that ID", 404));
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        seller: updatedSeller,
+      },
+    });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    next(new AppError("Profil yenilənərkən gözlənilməz xəta baş verdi", 500));
   }
-
-  const updatedSeller = await Seller.findByIdAndUpdate(req.seller.id, filteredBody, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!updatedSeller) {
-    console.warn("No seller found with ID:", req.seller.id);
-    return next(new AppError("No seller found with that ID", 404));
-  }
-
-
-  res.status(200).json({
-    status: "success",
-    data: {
-      seller: updatedSeller,
-    },
-  });
 });
-
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
