@@ -19,13 +19,21 @@ const globalErrorHandler = require("./controllers/errorController");
 const app = express();
 
 app.use(helmet());
+// app.use(
+//   cors({
+//     origin: ["http://localhost:3000", "https://rackspace-zeta.vercel.app"],
+//     methods: ["GET", "POST", "PATCH", "DELETE"],
+//     credentials: true,
+//   })
+// );
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://rackspace-zeta.vercel.app"],
-    methods: ["GET", "POST", "PATCH", "DELETE"],
+    origin: true, 
+    methods: ["GET", "POST", "PATCH", "DELETE","PUT"],
     credentials: true,
   })
 );
+
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
