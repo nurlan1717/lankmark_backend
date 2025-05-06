@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
     },
     photo: {
         type: String,
-        default: 'https://thumbs.dreamstime.com/b/default-profile-picture-icon-high-resolution-high-resolution-default-profile-picture-icon-symbolizing-no-display-picture-360167031.jpg'
+        default: 'https://i.pinimg.com/474x/f1/da/a7/f1daa70c9e3343cebd66ac2342d5be3f.jpg'
     },
     password: {
         type: String,
