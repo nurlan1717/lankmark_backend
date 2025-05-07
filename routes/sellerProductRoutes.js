@@ -9,12 +9,12 @@ const router = express.Router();
 router.use(sellerAuthController.protect);
 
 router.get('/my-products', productController.getMyProducts);
-router.post('/',photoUpload.single('image') ,productController.createProduct);
+router.post('/',photoUpload.array('image', 10) ,productController.createProduct);
 
 router
   .route('/:id')
   .get(checkProductOwnership, productController.getProductById)
-  .patch(checkProductOwnership,photoUpload.single('image'), productController.editProductById)
+  .patch(checkProductOwnership,photoUpload.array('image',10), productController.editProductById)
   .delete(checkProductOwnership, productController.deleteProductById);
 
 module.exports = router;

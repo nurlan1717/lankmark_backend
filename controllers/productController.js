@@ -6,8 +6,7 @@ const uploadToCloudinary  = require('../utils/cloudinaryUpload');
 const { photoUpload } = require('../utils/multerConfig');
 
 
-exports.uploadSellerPhoto = photoUpload.single('image');
-
+exports.uploadProductPhotos = photoUpload.array('image', 10);
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
 
@@ -33,19 +32,7 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
   });
 });
 
-// exports.getProductById = catchAsync(async (req, res, next) => {
-//   const { id } = req.params;
-//   const oneProduct = await Product.findById(id).populate(
-//     "seller",
-//     "firstname lastname email"
-//   );
 
-//   if (!oneProduct) {
-//     return next(new AppError("No car with id " + id, 404));
-//   }
-
-//   res.status(200).json(oneProduct);
-// });
 exports.getProductById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
@@ -70,22 +57,6 @@ exports.getProductById = catchAsync(async (req, res, next) => {
   res.status(200).json(product);
 });
 
-// exports.editProductById = catchAsync(async (req, res, next) => {
-//   const { id } = req.params;
-//   const updatedProduct = await Product.findByIdAndUpdate(id, req.body, {
-//     new: true,
-//     runValidators: true,
-//   });
-
-//   if (!updatedProduct) {
-//     return next(new AppError("No car with id " + id, 404));
-//   }
-
-//   res.status(200).json({
-//     status: "success",
-//     data: updatedProduct,
-//   });
-// });
 
 
 
@@ -101,13 +72,14 @@ exports.editProductById = catchAsync(async (req, res, next) => {
     return next(new AppError("You do not have permission to update this product", 403));
   }
 
-  if (req.file) {
+  if (req.files && req.files.length > 0) {
     try {
-      const photoUrl = await uploadToCloudinary(req.file);
-      req.body.image = [photoUrl]; 
+      const uploadPromises = req.files.map(file => uploadToCloudinary(file));
+      const photoUrls = await Promise.all(uploadPromises);
+      req.body.image = photoUrls;
     } catch (err) {
-      console.error("Error uploading photo:", err);
-      return next(new AppError("Failed to upload product image", 500));
+      console.error("Error uploading photos:", err);
+      return next(new AppError("Failed to upload product images", 500));
     }
   }
 
@@ -126,56 +98,8 @@ exports.editProductById = catchAsync(async (req, res, next) => {
 
 
 
-// exports.createProduct = catchAsync(async (req, res, next) => {
-//   try {
-//     let newProduct = await Product.create(req.body);
-//     newProduct = await Product.findById(newProduct._id).populate(
-//       "seller",
-//       "firstname lastname email"
-//     );
-//     res.status(201).json({
-//       status: "success",
-//       data: newProduct,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     next(error);
-//   }
-// });
-
-// exports.createProduct = catchAsync(async (req, res, next) => {
-
-
-//   if (!req.body.seller) {
-//     if (req.seller && req.seller.id) {
-//       req.body.seller = req.seller.id;
-//     } else {
-//       console.warn("No seller info found in request. Cannot assign seller.");
-//     }
-//   }
-
-//   try {
-//     const newProduct = await Product.create(req.body);
-
-//     const populatedProduct = await Product.findById(newProduct._id).populate(
-//       "seller",
-//       "name surname email profilePicture"
-//     );
-    
-
-
-//     res.status(201).json({
-//       status: "success",
-//       data: populatedProduct
-//     });
-//   } catch (err) {
-//     console.error("Error creating product:", err);
-//     return next(new AppError("Failed to create product", 500));
-//   }
-// });
 
 exports.createProduct = catchAsync(async (req, res, next) => {
-
   if (!req.body.seller) {
     if (req.seller && req.seller.id) {
       req.body.seller = req.seller.id;
@@ -187,26 +111,27 @@ exports.createProduct = catchAsync(async (req, res, next) => {
     console.log("Seller provided in request body:", req.body.seller); 
   }
 
-  if (req.file) {
+  if (req.files && req.files.length > 0) {
     try {
-      const photoUrl = await uploadToCloudinary(req.file);
-      req.body.image =[photoUrl]; 
+      const uploadPromises = req.files.map(file => uploadToCloudinary(file));
+      const photoUrls = await Promise.all(uploadPromises);
+      req.body.image = photoUrls;
     } catch (err) {
-      console.error("Error uploading photo:", err);
-      return next(new AppError("Failed to upload product image", 500));
+      console.error("Error uploading photos:", err);
+      return next(new AppError("Failed to upload product images", 500));
     }
   } else {
-    console.log("No image file detected in the request."); 
+    console.log("No image files detected in the request."); 
+    return next(new AppError("At least one product image is required", 400));
   }
 
   let newProduct;
   try {
     newProduct = await Product.create(req.body);
   } catch (err) {
-    console.error(" Error creating product:", err);
+    console.error("Error creating product:", err);
     return next(new AppError("Failed to create product", 500));
   }
-
 
   let populatedProduct;
   try {
@@ -219,7 +144,6 @@ exports.createProduct = catchAsync(async (req, res, next) => {
     return next(new AppError("Failed to populate product", 500));
   }
 
-
   res.status(201).json({
     status: "success",
     data: populatedProduct
@@ -230,17 +154,6 @@ exports.createProduct = catchAsync(async (req, res, next) => {
 
 
 
-// exports.deleteProductById = catchAsync(async (req, res, next) => {
-//   const { id } = req.params;
-
-//   const deletedProduct = await Product.findByIdAndDelete(id);
-
-//   if (!deletedProduct) {
-//     return next(new AppError("No product with id " + id, 404));
-//   }
-
-//   res.status(204).json({ status: "success", data: null });
-// });
 
 exports.deleteProductById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
