@@ -24,7 +24,7 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
     .paginate();
   const allProducts = await features.query.populate(
     "seller",
-    "firstname lastname email"
+    "name surname email"
   );
   res.status(200).json({
     status: "success",
