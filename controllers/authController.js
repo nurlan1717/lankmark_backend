@@ -250,90 +250,104 @@ exports.restrictTo = (...roles) => {
 exports.forgotPassword = catchAsync(async (req, res, next) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
-        return next(new AppError('Bu email adresine kayıtlı kullanıcı bulunamadı.', 404));
+        return next(new AppError('Bu email ünvanına qeydiyyatlı istifadəçi tapılmadı.', 404));
     }
 
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${resetToken}`;
+    const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
 
     try {
         await sendEmail({
             email: user.email,
-            subject: 'Şifre Sıfırlama Bağlantınız (10 dakika geçerlidir)',
+            subject: 'Şifrə Sıfırlama Linkiniz (10 dəqiqə etibarlıdır)',
             html: `
-                <p>Şifrenizi sıfırlamak için lütfen aşağıdaki linke tıklayın:</p>
-                <a href="${resetURL}">${resetURL}</a>
-                <p>Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.</p>
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #2c3e50;">Şifrəni Sıfırlama</h2>
+                    <p style="font-size: 16px;">Şifrənizi sıfırlamaq üçün aşağıdakı düyməyə klikləyin:</p>
+                    <a href="${resetURL}" style="display: inline-block; padding: 12px 24px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 15px 0;">Şifrəni Sıfırla</a>
+                    <p style="font-size: 14px; color: #7f8c8d;">Əgər bu sorğunu siz göndərməmisinizsə, bu e-poçt mesajını görməməzliyə vuraya bilərsiniz.</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #95a5a6;">Link işləmirsə, aşağıdakı ünvanı brauzerinizin ünvan sətrinə köçürün:<br>${resetURL}</p>
+                </div>
             `
         });
 
         res.status(200).json({
             status: 'success',
-            message: 'Şifre sıfırlama linki email adresinize gönderildi!'
+            message: 'Şifrə sıfırlama linki email ünvanınıza göndərildi!'
         });
     } catch (err) {
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
         await user.save({ validateBeforeSave: false });
 
-        return next(new AppError('Email gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 500));
+        return next(new AppError('Email göndərilərkən xəta baş verdi. Zəhmət olmasa bir müddət sonra yenidən cəhd edin.', 500));
     }
 });
 
-exports.resetPassword = catchAsync(async (req, res, next) => {
-    const hashedToken = crypto
-        .createHash('sha256')
-        .update(req.params.token)
-        .digest('hex');
+exports.resetPassword = async (req, res, next) => {
+    try {
+        const hashedToken = crypto
+            .createHash('sha256')
+            .update(req.params.token)
+            .digest('hex');
 
-    const user = await User.findOne({
-        passwordResetToken: hashedToken,
-        passwordResetExpires: { $gt: Date.now() }
-    });
+            const user = await User.findOne({
+            passwordResetToken: hashedToken,
+            passwordResetExpires: { $gt: Date.now() },
+        });
 
-    if (!user) {
-        return next(new AppError('Token geçersiz veya süresi dolmuş', 400));
+        if (!user) {
+            return res.status(400).json({ message: 'Token yanlışdır və ya müddəti bitib' });
+        }
+
+        if (!req.body.password || !req.body.passwordConfirm) {
+            return res.status(400).json({ message: 'Şifrə və təkrar şifrə göndərilməlidir.' });
+        }
+
+        user.password = req.body.password;
+        user.passwordConfirm = req.body.passwordConfirm;
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+
+        await user.save();
+
+        createSendToken(user, 200, res);
+    } catch (err) {
+        console.error('Reset Password Error:', err);
+        res.status(500).json({ message: 'Server xətası', error: err.message });
     }
-
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save();
-
-    
-    createSendToken(user, 200, res);
-});
+};
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
 
-    
+
     const user = await User.findById(req.user._id).select('+password');
-    
+
     if (!user) {
         console.log('Error: User not found');
         return next(new AppError('User not found', 404));
     }
-    
+
     const passwordCorrect = await user.correctPassword(req.body.passwordCurrent, user.password);
-    
+
     if (!passwordCorrect) {
         console.log('Password verification failed');
         return next(new AppError('Mevcut şifreniz yanlış!', 401));
     }
-    
-    
+
+
     user.password = req.body.password;
     user.passwordConfirm = req.body.passwordConfirm;
-    
+
     try {
         await user.save();
     } catch (error) {
         return next(new AppError('Password update failed during save', 500));
     }
-    
+
     createSendToken(user, 200, res);
 });
 

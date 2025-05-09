@@ -66,7 +66,8 @@ exports.getAllSellers = catchAsync(async (req, res, next) => {
 
 exports.getProfile = catchAsync(async (req, res, next) => {
   const sellerId = req.params.id ? req.params.id : req?.seller?.id;
-
+  console.log('Seller ID:', sellerId);
+  
   if (!sellerId) {
     return next(new AppError('Seller ID is missing in the request or parameters.', 400));
   }
