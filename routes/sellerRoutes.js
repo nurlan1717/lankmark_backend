@@ -1,18 +1,20 @@
 const express = require('express');
 const sellerAuthController = require('../controllers/sellerAuthController');
 const sellerController = require('../controllers/sellerController');
-const productController = require('../controllers/productController');
+// const productController = require('../controllers/productController');
 const {photoUpload} = require('../utils/multerConfig')
 
 const router = express.Router();
 
 router.post('/login', sellerAuthController.login);
+router.get('/', sellerController.getAllSellers);
+router.get('/profile/:id', sellerController.getProfile);
 
 router.use(sellerAuthController.protect);
 
-router.get('/profile', sellerController.getProfile);
 router.patch('/update-profile',photoUpload.single('photo'), sellerController.updateProfile);
 router.patch('/update-password', sellerAuthController.updatedPassword);
+
 
 // router.get('/products', productController.getAllProducts);
 // router.post('/products', productController.createProduct);

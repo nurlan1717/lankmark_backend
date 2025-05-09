@@ -60,27 +60,30 @@ exports.getAllSellers = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: sellers.length,
-    data: {
-      sellers
-    }
+    data: sellers
   });
 });
 
 exports.getProfile = catchAsync(async (req, res, next) => {
-  if (!req.seller || !req.seller.id) {
-    return next(new AppError('Seller ID is missing in the request.', 400));
+  const sellerId = req.params.id ? req.params.id : req?.seller?.id;
+
+  if (!sellerId) {
+    return next(new AppError('Seller ID is missing in the request or parameters.', 400));
   }
-  const seller = await Seller.findById(req.seller.id);
+
+  const seller = await Seller.findById(sellerId);
+
   if (!seller) {
     return next(new AppError('No seller found with that ID', 404));
   }
+
   res.status(200).json({
     status: 'success',
-    data: {
-      seller
-    }
+    data: seller
   });
 });
+
+
 
 exports.updateProfile = catchAsync(async (req, res, next) => {
   try {
