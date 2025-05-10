@@ -26,10 +26,6 @@ const sellerSchema = new moongose.Schema(
       type: String,
       required: [false, "Seller category is not required"],
     },
-    certificate: {
-      type: String,
-      required: [true, "Certificate is required"],
-    },
     age: {
       type: Number,
       required: [true, "Age is required"],
@@ -91,9 +87,9 @@ sellerSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
       this.passwordChangedAt.getTime() / 1000,
       10
     );
-    return JWTTimestamp < changedTimestamp; 
+    return JWTTimestamp < changedTimestamp;
   }
-  return false; 
+  return false;
 };
 
 sellerSchema.methods.createPasswordResetToken = function () {
@@ -116,6 +112,6 @@ sellerSchema.methods.createPasswordResetToken = function () {
 
 
 
-const Seller = moongose.model("Seller",sellerSchema);
+const Seller = moongose.model("Seller", sellerSchema);
 
 module.exports = Seller;

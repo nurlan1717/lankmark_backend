@@ -12,8 +12,8 @@ router.route('/:id')
 
 router.use(sellerAuthController.protect);
 
-router.route('/')
-  .post(productController.createProduct);
+// router.route('/')
+//   .post(productController.createProduct);
 
 router.route('/:id')
   .patch(productController.editProductById)

@@ -2,19 +2,26 @@ const express = require('express');
 const productController = require('../controllers/productController');
 const sellerAuthController = require('../controllers/sellerAuthController');
 const { checkProductOwnership } = require('../middleware/middleware');
-const {photoUpload} = require('../utils/multerConfig')
+const { uploadProductFiles } = require('../utils/multerConfig')
 
 const router = express.Router();
 
 router.use(sellerAuthController.protect);
-
+router.post(
+  '/',
+  uploadProductFiles,
+  productController.createProduct
+);
 router.get('/my-products', productController.getMyProducts);
-router.post('/',photoUpload.array('image', 10) ,productController.createProduct);
+
 
 router
   .route('/:id')
   .get(checkProductOwnership, productController.getProductById)
-  .patch(checkProductOwnership,photoUpload.array('image',10), productController.editProductById)
+  .patch(
+    uploadProductFiles,
+    productController.editProductById
+  )
   .delete(checkProductOwnership, productController.deleteProductById);
 
 module.exports = router;
@@ -22,7 +29,7 @@ module.exports = router;
 // const express = require('express');
 // const productController = require('../controllers/productController');
 // const sellerAuthController = require('../controllers/sellerAuthController');
-// const { checkProductOwnership } = require('../middleware/middleware'); 
+// const { checkProductOwnership } = require('../middleware/middleware');
 // const router = express.Router();
 
 // router.use(sellerAuthController.protect);
@@ -33,7 +40,7 @@ module.exports = router;
 
 // router
 //   .route('/:id')
-//   .get(productController.getProductById) 
+//   .get(productController.getProductById)
 //   .patch(checkProductOwnership, productController.editProductById)
 //   .delete(checkProductOwnership, productController.deleteProductById);
 

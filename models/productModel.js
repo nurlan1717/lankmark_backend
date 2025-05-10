@@ -30,12 +30,11 @@ const productSchema = new mongoose.Schema({
     },
     seller: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Seller', 
+        ref: 'Seller',
         required: [true, "Seller of product is required!"]
-      },
+    },
     weight: {
-        type: String,  
-        
+        type: String,
         required: [true, 'Unit of measurement is required!']
     },
     quantity: {
@@ -46,25 +45,25 @@ const productSchema = new mongoose.Schema({
     isAvailable: {
         type: Boolean,
         default: true,
-        required:false
+        required: false
     },
     isOrganic: {
         type: Boolean,
         default: false,
-        required:false
+        required: false
     },
     rating: {
         type: Number,
         min: 0,
         max: 5,
         default: 0,
-        required:false
+        required: false
     },
     count: {
         type: Number,
         default: 0,
         min: [0, 'Count cannot be negative'],
-        required:false
+        required: false
     },
     productionLocation: {
         type: String,
@@ -72,7 +71,24 @@ const productSchema = new mongoose.Schema({
     },
     certificates: {
         type: [String],
-        required: false
+        required: true,
+        set: function (val) {
+            if (!Array.isArray(val)) {
+                throw new AppError('Certificates must be an array!', 400);
+            }
+            if (!val.every(item => typeof item === 'string')) {
+                throw new AppError('Certificates array must only contain strings!', 400);
+            }
+            return val;
+        },
+        validate: {
+            validator: function (value) {
+                if (value === undefined || value === null) return true;
+                return Array.isArray(value) &&
+                    value.every(item => typeof item === 'string');
+            },
+            message: 'Certificates must be an array of strings'
+        }
     },
     saleType: {
         type: String,

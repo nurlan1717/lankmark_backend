@@ -2,10 +2,7 @@ const Seller = require('../models/sellerModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const uploadToCloudinary = require('../utils/cloudinaryUpload');
-const { photoUpload } = require('../utils/multerConfig');
-
-
-exports.uploadSellerPhoto = photoUpload.single('photo');
+const { uploadProductFiles } = require('../utils/multerConfig');
 
 exports.createSeller = catchAsync(async (req, res, next) => {
   if (!req.user) {
@@ -67,7 +64,7 @@ exports.getAllSellers = catchAsync(async (req, res, next) => {
 exports.getProfile = catchAsync(async (req, res, next) => {
   const sellerId = req.params.id ? req.params.id : req?.seller?.id;
   console.log('Seller ID:', sellerId);
-  
+
   if (!sellerId) {
     return next(new AppError('Seller ID is missing in the request or parameters.', 400));
   }
@@ -83,8 +80,6 @@ exports.getProfile = catchAsync(async (req, res, next) => {
     data: seller
   });
 });
-
-
 
 exports.updateProfile = catchAsync(async (req, res, next) => {
   try {
@@ -106,7 +101,7 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
       "age",
       "location"
     );
-
+    console.log("File", req.file);
     if (req.file) {
       try {
         const uploadedPhotoUrl = await uploadToCloudinary(req.file);
@@ -116,6 +111,7 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
         return next(new AppError("Failed to upload image", 500));
       }
     }
+    console.log("body", filteredBody);
 
     const updatedSeller = await Seller.findByIdAndUpdate(
       req.seller.id,
