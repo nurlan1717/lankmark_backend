@@ -101,7 +101,6 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
       "age",
       "location"
     );
-    console.log("File", req.file);
     if (req.file) {
       try {
         const uploadedPhotoUrl = await uploadToCloudinary(req.file);
@@ -111,7 +110,6 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
         return next(new AppError("Failed to upload image", 500));
       }
     }
-    console.log("body", filteredBody);
 
     const updatedSeller = await Seller.findByIdAndUpdate(
       req.seller.id,

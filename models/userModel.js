@@ -7,12 +7,28 @@ const userSchema = new mongoose.Schema({
     firstname: {
         type: String,
         required: [true, "Ad alanı zorunludur!"],
-        trim: true
+        trim: true,
+        minlength: [3, "Ad minimum 3 herf olmalıdır!"],
+        maxlength: [18, "Ad maximum 18 herf olmalıdır!"],
+        validate: {
+            validator: function(v) {
+                return /^[a-zA-ZəığüşöçƏIĞÜŞÖÇ]+$/.test(v);
+            },
+            message: "Ad yalnız hərflərdən ibarət olmalıdır!"
+        }
     },
     lastname: {
         type: String,
         required: [true, "Soyad alanı zorunludur!"],
-        trim: true
+        trim: true,
+        minlength: [3, "Soyad minimum 3 herf olmalıdır!"],
+        maxlength: [18, "Soyad maximum 18 herf olmalıdır!"],
+        validate: {
+            validator: function(v) {
+                return /^[a-zA-ZəığüşöçƏIĞÜŞÖÇ]+$/.test(v);
+            },
+            message: "Soyad yalnız hərflərdən ibarət olmalıdır!"
+        }
     },
     email: {
         type: String,
@@ -53,9 +69,18 @@ const userSchema = new mongoose.Schema({
         type: Date,
         validate: {
             validator: function (date) {
-                return date < new Date();
+                if (!date) return true;
+                const today = new Date();
+                const birthDate = new Date(date);
+                const age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    return age - 1 >= 16;
+                }
+                return age >= 16;
             },
-            message: 'Doğum tarihi gelecekte olamaz'
+            message: 'İstifadəçi ən azı 16 yaşında olmalıdır'
         }
     },
     city: String,
